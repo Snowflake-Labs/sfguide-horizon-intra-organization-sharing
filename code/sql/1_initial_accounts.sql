@@ -11,16 +11,16 @@ use role orgadmin;
 
 create account horizon_lab_azure
   admin_name = horizonadmin
-  admin_password = 'Summit2024!'
-  email = 'vinay.srihari@snowflake.com'
+  admin_password = 'FILL_IN_PASSWORD'
+  email = 'FILL_IN_EMAIL'
   must_change_password = false
   edition = business_critical
   region = AZURE_WESTEUROPE;
 
 create account horizon_lab_aws_consumer
   admin_name = horizonadmin
-  admin_password = 'Summit2024!'
-  email = 'vinay.srihari@snowflake.com'
+  admin_password = 'FILL_IN_PASSWORD'
+  email = 'FILL_IN_EMAIL'
   must_change_password = false
   edition = business_critical
   region = AWS_US_WEST_2;
