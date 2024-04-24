@@ -48,7 +48,7 @@ CREATE OR REPLACE SCHEMA frostbyte_tasty_bytes.weather;
 CREATE OR REPLACE SCHEMA frostbyte_tasty_bytes.menu_reviews;
 
 -- create movie reviews schema
-CREATE OR REPLACE SCHEMA frostbyte_tasty_bytes.film_reviews;
+CREATE OR REPLACE SCHEMA frostbyte_tasty_bytes.movie_reviews;
 
 -- create warehouses
 CREATE OR REPLACE WAREHOUSE demo_build_wh

@@ -9,18 +9,20 @@ select current_user(), current_account(), current_region(), current_version();
 
 use role orgadmin;
 
+-- FILL IN YOUR CREDENTIALS: admin_password, email
 create account horizon_lab_azure
   admin_name = horizonadmin
-  admin_password = 'FILL_IN_PASSWORD'
-  email = 'FILL_IN_EMAIL'
+  admin_password = ''
+  email = ''
   must_change_password = false
   edition = business_critical
   region = AZURE_WESTEUROPE;
 
+-- FILL IN YOUR CREDENTIALS: admin_password, email
 create account horizon_lab_aws_consumer
   admin_name = horizonadmin
-  admin_password = 'FILL_IN_PASSWORD'
-  email = 'FILL_IN_EMAIL'
+  admin_password = ''
+  email = ''
   must_change_password = false
   edition = business_critical
   region = AWS_US_WEST_2;
