@@ -1,0 +1,16 @@
+definition_version: 1
+native_app:
+  name: horizon_quickstart_project
+  source_stage: app_src.stage
+  artifacts:
+    - src: app/src/*
+      dest: ./
+  package:
+    name: horizon_quickstart_package
+    warehouse: tasty_data_app_wh
+    scripts:
+      - scripts/setup_package_script.sql
+  application:
+    name: horizon_quickstart_app
+    debug: true
+    warehouse: tasty_data_app_wh

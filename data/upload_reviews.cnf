@@ -1,1 +1,0 @@
-put file://&srcpath/data/imdb_reviews/* &stagename/imdb_reviews/ auto_compress=false;

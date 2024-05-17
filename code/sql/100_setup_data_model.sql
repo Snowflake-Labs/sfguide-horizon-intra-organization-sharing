@@ -7,17 +7,9 @@
     |_| \__,_||___/ \__| \__, | |____/  \__, | \__|\___||___/
                           __/ |          __/ |               
                          |___/          |___/            
-Quickstart:   Tasty Bytes Introduction
-Version:      v1
-Script:       tb_introduction.sql         
-Create Date:  2023-03-17
+Quickstart:   Tasty Bytes Introduction (https://tinyurl.com/mth586za)
 Author:       Jacob Kranzler
 Copyright(c): 2023 Snowflake Inc. All rights reserved.
-****************************************************************************************************
-SUMMARY OF CHANGES
-Date(yyyy-mm-dd)    Author              Comments
-------------------- ------------------- ------------------------------------------------------------
-2023-03-17          Jacob Kranzler      Initial Release
 ***************************************************************************************************/
 
 USE ROLE sysadmin;
@@ -28,6 +20,16 @@ USE ROLE sysadmin;
 
 -- create frostbyte_tasty_bytes database
 CREATE OR REPLACE DATABASE frostbyte_tasty_bytes;
+
+-- create frostbyte_tasty_bytes_app database
+-- Sharing an object with an application requires REFERENCE_USAGE on the container
+-- database. There is currently a limitation where a database cannot be shared as
+-- a reference (by an app) and directly (by a share), so we must setup a separate database.
+CREATE OR REPLACE DATABASE frostbyte_tasty_bytes_app;
+CREATE OR REPLACE SCHEMA frostbyte_tasty_bytes_app.harmonized;
+CREATE OR REPLACE SCHEMA frostbyte_tasty_bytes_app.analytics;
+
+USE DATABASE frostbyte_tasty_bytes;
 
 -- create raw_pos schema
 CREATE OR REPLACE SCHEMA frostbyte_tasty_bytes.raw_pos;
@@ -92,7 +94,7 @@ CREATE OR REPLACE WAREHOUSE tasty_dev_wh
 COMMENT = 'developer warehouse for tasty bytes';
 
 CREATE OR REPLACE WAREHOUSE tasty_data_app_wh
-    WAREHOUSE_SIZE = 'xsmall'
+    WAREHOUSE_SIZE = 'medium'
     WAREHOUSE_TYPE = 'standard'
     AUTO_SUSPEND = 60
     AUTO_RESUME = TRUE
@@ -526,18 +528,46 @@ FROM @frostbyte_tasty_bytes.public.s3load/raw_pos/order_header/;
 COPY INTO frostbyte_tasty_bytes.raw_pos.order_detail
 FROM @frostbyte_tasty_bytes.public.s3load/raw_pos/order_detail/;
 
+
+/*--
+   Populate Tasty Bytes App database objects for sharing with application package
+ */
+CREATE OR REPLACE TABLE frostbyte_tasty_bytes_app.harmonized.orders_v
+COMMENT = 'Tasty Bytes Order Detail Table for App'
+    AS
+SELECT * FROM frostbyte_tasty_bytes.harmonized.orders_v;
+-- select count(*) from frostbyte_tasty_bytes_app.harmonized.orders_v; (693M)
+
+
 /*--
  • analytics view creation
 --*/
 
 -- orders_v view
-CREATE OR REPLACE SECURE VIEW frostbyte_tasty_bytes.analytics.orders_v
+CREATE OR REPLACE VIEW frostbyte_tasty_bytes.analytics.orders_v
 COMMENT = 'Tasty Bytes Order Detail View'
     AS
 SELECT DATE(o.order_ts) AS date, * FROM frostbyte_tasty_bytes.harmonized.orders_v o;
 
+CREATE OR REPLACE VIEW frostbyte_tasty_bytes_app.analytics.orders_v
+COMMENT = 'Tasty Bytes Order Detail View'
+    AS
+SELECT DATE(o.order_ts) AS date, * FROM frostbyte_tasty_bytes_app.harmonized.orders_v o;
+
+
 -- customer_loyalty_metrics_v view
 CREATE OR REPLACE SECURE VIEW frostbyte_tasty_bytes.analytics.customer_loyalty_metrics_v
+(
+    CUSTOMER_ID  COMMENT 'Unique customer identifier',
+	CITY         COMMENT 'City of residence of the client',
+	COUNTRY      COMMENT 'Country of residence of the client',
+	FIRST_NAME   COMMENT 'Client first name',
+	LAST_NAME    COMMENT 'Client surname',
+	PHONE_NUMBER COMMENT 'Phone number including area code',
+	E_MAIL       COMMENT 'Approved email for business use',
+	TOTAL_SALES  COMMENT 'Total sales volume',
+	VISITED_LOCATION_IDS_ARRAY COMMENT 'List of franchises this customer has visited'
+)
 COMMENT = 'Tasty Bytes Customer Loyalty Member Metrics View'
     AS
 SELECT * FROM frostbyte_tasty_bytes.harmonized.customer_loyalty_metrics_v;
