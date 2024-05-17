@@ -35,7 +35,7 @@ SELECT * FROM frostbyte_weathersource.onpoint_id.postal_codes where country in (
 SELECT COUNT(*) FROM frostbyte_tasty_bytes.weather.postal_codes;
 
 -- Step 2 - Harmonizing First (Point of Sale) and Third Party Data (Weather)
-CREATE OR REPLACE VIEW frostbyte_tasty_bytes.harmonized.daily_weather_v
+CREATE OR REPLACE SECURE VIEW frostbyte_tasty_bytes.harmonized.daily_weather_v
     AS
 SELECT 
     hd.*,
@@ -110,6 +110,12 @@ GROUP BY country, city;
 -- Step 6 - Deploy Total Order amounts by Postal Code as a Secure View
 
 CREATE OR REPLACE SECURE VIEW frostbyte_tasty_bytes.analytics.orders_by_postal_code_v
+  (
+	POSTAL_CODE    COMMENT 'Postal code area for order management',
+	CITY           COMMENT 'City for which order data is aggregated',
+	COUNT_ORDER    COMMENT 'Total number of orders for the area',
+	ORDER_TOTAL    COMMENT 'Total order volume for the area'
+  )
 AS
 SELECT 
     cl.postal_code,
@@ -121,4 +127,3 @@ JOIN raw_customer.customer_loyalty cl
     ON oh.customer_id = cl.customer_id
 GROUP BY ALL
 ORDER BY order_total DESC;
-

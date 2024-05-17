@@ -154,13 +154,16 @@ CREATE OR REPLACE SCHEMA governance
 
 GRANT ALL ON SCHEMA governance TO ROLE sysadmin;
 
-    /**
-     Create database roles for fine-grained access to shared data:
-     
-        TASTYBYTES_AMERICAS_ROLE, TASTYBYTES_APJ_ROLE, TASTYBYTES_ADMIN_ROLE
-        
-     Consumer Admin will assign each database role to a corresponding local role.
-    **/
+  /**
+   Create database roles for fine-grained access to shared data:
+   
+   TASTYBYTES_EURO_ROLE, TASTYBYTES_AMERICAS_ROLE, TASTYBYTES_APJ_ROLE, TASTYBYTES_MANAGER_ROLE
+      
+   Consumer Admin will assign each database role to a corresponding local role.
+  **/
+
+CREATE OR REPLACE DATABASE ROLE tastybytes_euro_role
+    COMMENT = 'Europe database role for Tasty Bytes';
 
 CREATE OR REPLACE DATABASE ROLE tastybytes_americas_role
     COMMENT = 'Americas database role for Tasty Bytes';
@@ -168,30 +171,35 @@ CREATE OR REPLACE DATABASE ROLE tastybytes_americas_role
 CREATE OR REPLACE DATABASE ROLE tastybytes_apj_role
     COMMENT = 'APJ database role for Tasty Bytes';
 
-CREATE OR REPLACE DATABASE ROLE tastybytes_admin_role
-    COMMENT = 'Admin (all access) database role for Tasty Bytes';
+CREATE OR REPLACE DATABASE ROLE tastybytes_manager_role
+    COMMENT = 'Manager (all access) database role for Tasty Bytes';
 
 -- now we will grant USAGE on all Schemas to the database roles
+GRANT USAGE ON ALL SCHEMAS IN DATABASE frostbyte_tasty_bytes TO DATABASE ROLE tastybytes_euro_role;
 GRANT USAGE ON ALL SCHEMAS IN DATABASE frostbyte_tasty_bytes TO DATABASE ROLE tastybytes_americas_role;
 GRANT USAGE ON ALL SCHEMAS IN DATABASE frostbyte_tasty_bytes TO DATABASE ROLE tastybytes_apj_role;
-GRANT USAGE ON ALL SCHEMAS IN DATABASE frostbyte_tasty_bytes TO DATABASE ROLE tastybytes_admin_role;
+GRANT USAGE ON ALL SCHEMAS IN DATABASE frostbyte_tasty_bytes TO DATABASE ROLE tastybytes_manager_role;
 
 -- ensure that the database roles can run SELECT statements against our Data Model
+GRANT SELECT ON ALL TABLES IN SCHEMA frostbyte_tasty_bytes.raw_customer TO DATABASE ROLE tastybytes_euro_role;
 GRANT SELECT ON ALL TABLES IN SCHEMA frostbyte_tasty_bytes.raw_customer TO DATABASE ROLE tastybytes_americas_role;
 GRANT SELECT ON ALL TABLES IN SCHEMA frostbyte_tasty_bytes.raw_customer TO DATABASE ROLE tastybytes_apj_role;
-GRANT SELECT ON ALL TABLES IN SCHEMA frostbyte_tasty_bytes.raw_customer TO DATABASE ROLE tastybytes_admin_role;
+GRANT SELECT ON ALL TABLES IN SCHEMA frostbyte_tasty_bytes.raw_customer TO DATABASE ROLE tastybytes_manager_role;
 
+GRANT SELECT ON ALL TABLES IN SCHEMA frostbyte_tasty_bytes.raw_pos TO DATABASE ROLE tastybytes_euro_role;
 GRANT SELECT ON ALL TABLES IN SCHEMA frostbyte_tasty_bytes.raw_pos TO DATABASE ROLE tastybytes_americas_role;
 GRANT SELECT ON ALL TABLES IN SCHEMA frostbyte_tasty_bytes.raw_pos TO DATABASE ROLE tastybytes_apj_role;
-GRANT SELECT ON ALL TABLES IN SCHEMA frostbyte_tasty_bytes.raw_pos TO DATABASE ROLE tastybytes_admin_role;
+GRANT SELECT ON ALL TABLES IN SCHEMA frostbyte_tasty_bytes.raw_pos TO DATABASE ROLE tastybytes_manager_role;
 
+GRANT SELECT ON ALL TABLES IN SCHEMA frostbyte_tasty_bytes.analytics TO DATABASE ROLE tastybytes_euro_role;
 GRANT SELECT ON ALL TABLES IN SCHEMA frostbyte_tasty_bytes.analytics TO DATABASE ROLE tastybytes_americas_role;
 GRANT SELECT ON ALL TABLES IN SCHEMA frostbyte_tasty_bytes.analytics TO DATABASE ROLE tastybytes_apj_role;
-GRANT SELECT ON ALL TABLES IN SCHEMA frostbyte_tasty_bytes.analytics TO DATABASE ROLE tastybytes_admin_role;
+GRANT SELECT ON ALL TABLES IN SCHEMA frostbyte_tasty_bytes.analytics TO DATABASE ROLE tastybytes_manager_role;
 
+GRANT DATABASE ROLE tastybytes_euro_role TO ROLE sysadmin;
 GRANT DATABASE ROLE tastybytes_americas_role TO ROLE sysadmin;
 GRANT DATABASE ROLE tastybytes_apj_role TO ROLE sysadmin;
-GRANT DATABASE ROLE tastybytes_admin_role TO ROLE sysadmin;
+GRANT DATABASE ROLE tastybytes_manager_role TO ROLE sysadmin;
 
 
 -- next we will create one Tag for PII that allows these values: NAME, PHONE_NUMBER, EMAIL, BIRTHDAY
@@ -238,7 +246,7 @@ CREATE OR REPLACE MASKING POLICY governance.tasty_pii_string_mask AS (val STRING
         WHEN CURRENT_ROLE() IN ('ACCOUNTADMIN','SYSADMIN')
             THEN val
         -- only this database role in the Consumer account has access to unmasked values
-        WHEN ((INVOKER_SHARE() IS NOT NULL) AND (IS_DATABASE_ROLE_IN_SESSION('TASTYBYTES_ADMIN_ROLE')))
+        WHEN ((INVOKER_SHARE() IS NOT NULL) AND (IS_DATABASE_ROLE_IN_SESSION('TASTYBYTES_MANAGER_ROLE')))
             THEN val
         -- if a column is tagged with TASTY_PII : PHONE_NUMBER 
         -- then mask everything but the first 3 digits   
@@ -265,7 +273,7 @@ CREATE OR REPLACE MASKING POLICY governance.tasty_pii_date_mask AS (val DATE) RE
         WHEN CURRENT_ROLE() IN ('ACCOUNTADMIN','SYSADMIN')
             THEN val
         -- this database role in the Consumer account has access to unmasked values
-        WHEN ((INVOKER_SHARE() IS NOT NULL) AND (IS_DATABASE_ROLE_IN_SESSION('TASTYBYTES_ADMIN_ROLE')))
+        WHEN ((INVOKER_SHARE() IS NOT NULL) AND (IS_DATABASE_ROLE_IN_SESSION('TASTYBYTES_MANAGER_ROLE')))
             THEN val
         -- if a column is tagged with TASTY_PII : BIRTHDAY  
         -- then truncate to 5 year buckets 
@@ -333,8 +341,8 @@ ORDER BY lifetime_sales_usd;
 Step 4 - Row-Access Policies
 
  Within our CUSTOMER_LOYALTY table, our test role should only see Customers who are
- based in Germany. Database roles for Americas and APJ should be restricted to their regions.
- We will leverage the mapping table approach.
+ based in Japan. Database roles for Europe, Americas and APJ should be restricted to 
+ their regions. We will leverage the mapping table approach.
 ----------------------------------------------------------------------------------*/
 
 USE ROLE accountadmin;
@@ -346,14 +354,14 @@ CREATE OR REPLACE TABLE governance.row_policy_map
 
 -- INSERT the relevant Role to Country Permissions mapping
 INSERT INTO governance.row_policy_map
-    VALUES ('TASTYBYTES_TEST_ROLE','Germany'),
+    VALUES ('TASTYBYTES_TEST_ROLE','Japan'),
+            ('TASTYBYTES_EURO_ROLE','Germany'),
             ('TASTYBYTES_AMERICAS_ROLE','United States'),
             ('TASTYBYTES_AMERICAS_ROLE','Canada'),
             ('TASTYBYTES_AMERICAS_ROLE','Brazil'),
             ('TASTYBYTES_APJ_ROLE','South Korea'),
             ('TASTYBYTES_APJ_ROLE','India'),
             ('TASTYBYTES_APJ_ROLE','Japan'),
-            ('ACCOUNTADMIN','Japan'),
             ('TASTYBYTES_APJ_ROLE','Australia');
 
  /**
@@ -367,7 +375,7 @@ CREATE OR REPLACE ROW ACCESS POLICY governance.customer_country_row_policy
     AS (country STRING) RETURNS BOOLEAN ->
        CURRENT_ROLE() IN ('ACCOUNTADMIN','SYSADMIN') -- list of roles that will not be subject to the policy
         -- admin db-role is not subject to the policy
-        OR ((INVOKER_SHARE() IS NOT NULL) AND (IS_DATABASE_ROLE_IN_SESSION('TASTYBYTES_ADMIN_ROLE'))) 
+        OR ((INVOKER_SHARE() IS NOT NULL) AND (IS_DATABASE_ROLE_IN_SESSION('TASTYBYTES_MANAGER_ROLE'))) 
         OR EXISTS -- this clause references our mapping table from above to handle the row level filtering
             (
             SELECT rp.role
@@ -375,7 +383,7 @@ CREATE OR REPLACE ROW ACCESS POLICY governance.customer_country_row_policy
             WHERE 1=1
                 AND (rp.role = CURRENT_ROLE() 
                     OR ((INVOKER_SHARE() IS NOT NULL) 
-                        AND (IS_DATABASE_ROLE_IN_SESSION('TASTYBYTES_ADMIN_ROLE')))
+                        AND (IS_DATABASE_ROLE_IN_SESSION('TASTYBYTES_MANAGER_ROLE')))
                     )
                 AND rp.country_permissions = country
             )
@@ -427,13 +435,13 @@ USE ROLE accountadmin;
 -- for our use case, we will create a Conditional Aggregation Policy in our Governance
 -- Schema that will only allow queries from non-admin users to return results for queries 
 -- that aggregate more than 1000 rows
-CREATE OR REPLACE AGGREGATION POLICY governance.tasty_order_test_aggregation_policy
+CREATE OR REPLACE AGGREGATION POLICY governance.tasty_order_agg_policy
   AS () RETURNS AGGREGATION_CONSTRAINT ->
     CASE
       WHEN CURRENT_ROLE() IN ('ACCOUNTADMIN','SYSADMIN')
         THEN NO_AGGREGATION_CONSTRAINT()
       -- this database role in the Consumer account has ADMIN access
-      WHEN ((INVOKER_SHARE() IS NOT NULL) AND (IS_DATABASE_ROLE_IN_SESSION('TASTYBYTES_ADMIN_ROLE')))
+      WHEN ((INVOKER_SHARE() IS NOT NULL) AND (IS_DATABASE_ROLE_IN_SESSION('TASTYBYTES_MANAGER_ROLE')))
         THEN NO_AGGREGATION_CONSTRAINT()
       ELSE AGGREGATION_CONSTRAINT(MIN_GROUP_SIZE => 1000) -- atleast 1000 rows in aggregate
     END;
@@ -441,7 +449,7 @@ CREATE OR REPLACE AGGREGATION POLICY governance.tasty_order_test_aggregation_pol
 
 -- with the Aggregation Policy created, let's apply it to our Order Header table
 ALTER TABLE raw_pos.order_header
-    SET AGGREGATION POLICY governance.tasty_order_test_aggregation_policy;
+    SET AGGREGATION POLICY governance.tasty_order_agg_policy;
     -- UNSET AGGREGATION POLICY;
 
 -- now let's test our work by assuming our Test Role and executing a few queries
@@ -501,7 +509,7 @@ CREATE OR REPLACE PROJECTION POLICY governance.tasty_customer_test_projection_po
     WHEN CURRENT_ROLE() IN ('ACCOUNTADMIN','SYSADMIN')
         THEN PROJECTION_CONSTRAINT(ALLOW => true)
     -- this database role in the Consumer account has ADMIN access
-    WHEN ((INVOKER_SHARE() IS NOT NULL) AND (IS_DATABASE_ROLE_IN_SESSION('TASTYBYTES_ADMIN_ROLE')))
+    WHEN ((INVOKER_SHARE() IS NOT NULL) AND (IS_DATABASE_ROLE_IN_SESSION('TASTYBYTES_MANAGER_ROLE')))
         THEN PROJECTION_CONSTRAINT(ALLOW => true)
     ELSE PROJECTION_CONSTRAINT(ALLOW => false)
   END;

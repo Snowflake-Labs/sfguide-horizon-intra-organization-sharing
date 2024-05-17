@@ -4,10 +4,11 @@ Step 1 - Query Analytics Listing
 
 USE ROLE consumer_americas_role;
 USE WAREHOUSE tasty_dev_wh;
+USE DATABASE frostbyte_tasty_bytes;
 
 -- Where are the most TastyBytes franchises in the world?
 SELECT * 
-FROM frostbyte_tasty_bytes.analytics.franchise_city_v
+FROM analytics.franchise_city_v
 ORDER BY FRANCHISES DESC;
 
 -- How many times were daily sales zero by city and month?
@@ -15,8 +16,8 @@ SELECT
     month(dcm.date) as monthnum,
     dcm.city_name as city,
     dcm.country_desc as country,
-    count(*) as zero_sales_days
-FROM frostbyte_tasty_bytes.analytics.daily_city_metrics dcm
+    count(*) as zero_sales_days 
+FROM analytics.daily_city_metrics dcm
 WHERE 1=1
     AND dcm.daily_sales = 0
 GROUP BY monthnum, city, country
@@ -30,13 +31,13 @@ SELECT
     dcm.country_desc,
     dcm.daily_sales,
     dcm.avg_temperature_fahrenheit || 'F (' || 
-        round(frostbyte_tasty_bytes.analytics.fahrenheit_to_celsius(dcm.avg_temperature_fahrenheit),2) 
+        round(analytics.fahrenheit_to_celsius(dcm.avg_temperature_fahrenheit),2) 
         || 'C)' avg_temp,
     dcm.avg_precipitation_inches || 'in (' || 
-        round(frostbyte_tasty_bytes.analytics.inch_to_millimeter(dcm.avg_precipitation_inches),2)
+        round(analytics.inch_to_millimeter(dcm.avg_precipitation_inches),2)
         || 'mm)' avg_precipitation,   
     dcm.max_wind_speed_100m_mph
-FROM frostbyte_tasty_bytes.analytics.daily_city_metrics dcm
+FROM analytics.daily_city_metrics dcm
 WHERE 1=1
     AND dcm.city_name IN ('Berlin','Boston')
     AND month(dcm.date) IN (1,2)
@@ -123,13 +124,13 @@ Step 4 - Aggregation Policies
 USE ROLE consumer_apj_role;
 
 SELECT *
-FROM frostbyte_tasty_bytes.analytics.orders_by_postal_code_v;
+FROM analytics.orders_by_postal_code_v;
 
 -- let's now check that our privileged Sysadmin is not impacted
 USE ROLE sysadmin;
 
 SELECT *
-FROM frostbyte_tasty_bytes.analytics.orders_by_postal_code_v;
+FROM analytics.orders_by_postal_code_v;
 
 
 /*----------------------------------------------------------------------------------
