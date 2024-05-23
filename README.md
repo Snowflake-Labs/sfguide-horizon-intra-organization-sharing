@@ -1,8 +1,11 @@
-# Horizon Intra-Company Data Sharing Quickstart Scripts
+# Horizon Access Pillar: Intra-Company Sharing Scripts
 
-This project contains scripts and data files required for the [Horizon Intra-Company Data Sharing Quickstart](https://quickstarts.snowflake.com/guide/tasty_bytes_introduction/index.html#0)
+## Overview
 
-## Reading Material
+In this lab you will experience the latest **Snowflake Horizon Access Pillar** features for sharing data and native apps within the bounds of your organization. You will learn about organizational listings, unified search & discovery, data quality monitoring, role-based governance policies and programmatic management of data products. We will cover structured and unstructured data that is stored on-platform or on external storage.
 
-- Deck: [Hands-on-Lab: Experience a New Horizon for Intra-Company Collaboration](https://docs.google.com/presentation/d/1S88umkvabhObdLfans9Z68kghLFTgxFC/edit?usp=sharing&ouid=108106579121421877260&rtpof=true&sd=true)
-- Docs: [Becoming a Provider of Listings](https://other-docs.snowflake.com/en/collaboration/provider-becoming)
+This repository contains the SQL scripts and native app artifacts that are required to execute the steps described in the quickstart.
+
+## Step-By-Step Guide
+
+For prerequisites, environment setup, step-by-step guide and instructions, please refer to the [QuickStart Guide](https://quickstarts.snowflake.com/guide/horizon_intra_org_sharing/index.html?index=..%2F..index#0)
