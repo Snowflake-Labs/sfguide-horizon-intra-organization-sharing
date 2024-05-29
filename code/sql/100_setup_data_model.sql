@@ -544,7 +544,7 @@ SELECT * FROM frostbyte_tasty_bytes.harmonized.orders_v;
 --*/
 
 -- orders_v view
-CREATE OR REPLACE VIEW frostbyte_tasty_bytes.analytics.orders_v
+CREATE OR REPLACE SECURE VIEW frostbyte_tasty_bytes.analytics.orders_v
 COMMENT = 'Tasty Bytes Order Detail View'
     AS
 SELECT DATE(o.order_ts) AS date, * FROM frostbyte_tasty_bytes.harmonized.orders_v o;

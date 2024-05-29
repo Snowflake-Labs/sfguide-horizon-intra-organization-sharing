@@ -1,4 +1,4 @@
-# Horizon Access Pillar: Intra-Company Sharing Scripts
+# Horizon Access for Intra-Company Sharing Scripts
 
 ## Overview
 
